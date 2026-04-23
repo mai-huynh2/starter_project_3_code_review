@@ -1,0 +1,30 @@
+t
+from boggle_sover import Boggle
+
+
+class TestBoggleSolver(unittest.TestCase):
+    """
+    Test Frames (Category Partition style, summarized):
+    1) Valid small grid, valid dictionary, at least one word found
+    2) Valid grid, empty dictionary -> no words
+    3) Valid grid, dictionary words < 3 letters -> no words    4) Adjacency includes diagonals
+    5) Cannot reuse the same tile in a single word path
+    6) Multi-leter tiles (e.g., "Qu", "St", "Ie")
+    7) Duplicate dictionary entries -> solution should not duplicate (set-like behavior)
+    8) Different grid sizes (2x2, 4x4)
+    9) Invalid grid shapes (non-square) -> []
+    10) Invalid grid contents (non-strings / empty strings) -> []
+    11) Dictionary is not a list -> []
+    12) Using setters after construction works
+    """
+
+
+    def test_valid_2x2_finds_word(self):
+        grid = [,
+                ["C", "D"]]
+        dictionary = ["A", "B", "AC", "ACA", "ACB", "DE"]
+        game = Boggle(grid, dictionary
+        sol = game.getSolution()
+        # Expect only "ACB works (A->C->B via adjacency rules)
+        self.assertEqual(s
+    def test_empty_dictionary_r
