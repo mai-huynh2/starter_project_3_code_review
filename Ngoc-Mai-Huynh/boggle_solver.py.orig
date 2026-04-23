@@ -2,40 +2,47 @@ class Boggle:
     """
     Boggle solver class.
 
-    Data Members:
+    Data Members (as required):
       - grid: NxN 2D array of strings
-      - dictionary: list of words
+        (e.g., "A" or "Qu")
+      - dictionary: list of words (strings)
       - solution: list of found words
     """
 
     def __init__(self, grid, dictionary):
-        """Initialize grid and dictionary."""
+        """Constructor: sets grid and dictionary.
+        Prepares internal structures."""
         self.grid = None
         self.dictionary = None
         self.solution = []
 
-        self.grid_size = 0
-        self._prefixes = {}
-        self._dict_words = {}
+        self._n = 0
+        self._prefixes = {}    # set-like dict: prefix -> True
+        self._dict_words = {}  # set-like dict: word -> True
 
         self.setGrid(grid)
         self.setDictionary(dictionary)
 
     def setGrid(self, grid):
-        """Set the grid."""
+        """Setter for the grid. Expects an NxN 2D list of strings."""
         self.grid = grid
-        self.grid_size = 0
+        self._n = 0
 
         if not self._is_valid_grid(grid):
             return
 
-        self.grid_size = len(grid)
+        self._n = len(grid)
 
     def setDictionary(self, dictionary):
-        """Set dictionary and build prefix + word lookup."""
+        """
+        Setter for the dictionary.
+        Builds:
+          - _dict_words: fast lookup for full words
+          - _prefixes: fast pruning during DFS
+        """
         self.dictionary = dictionary
-        self._prefixes = {}
         self._dict_words = {}
+        self._prefixes = {}
 
         if not self._is_valid_dictionary(dictionary):
             return
@@ -54,7 +61,8 @@ class Boggle:
                 self._prefixes[word[:i]] = True
 
     def getSolution(self):
-        """Return list of found words or [] if invalid."""
+        """Return found words (uppercase).
+        Return [] if grid or dictionary invalid."""
         self.solution = []
 
         if (
@@ -63,27 +71,29 @@ class Boggle:
         ):
             return []
 
-        if self.grid_size == 0:
+        if self._n == 0:
             return []
 
-        found_words = {}
+        found = {}
 
-        # Start DFS from each cell
-        for r in range(self.grid_size):
-            for c in range(self.grid_size):
-                visited = self._make_visited_matrix(self.grid_size)
-                self._dfs(r, c, "", visited, found_words)
+        for r in range(self._n):
+            for c in range(self._n):
+                visited = self._make_visited_matrix(self._n)
+                self._dfs(r, c, "", visited, found)
 
         result = []
-        for word in found_words:
-            result.append(word)
-
+        for w in found:
+            result.append(w)
         result.sort()
+
         self.solution = result
         return result
 
-    def _dfs(self, r, c, current, visited, found_words):
-        """Depth-first search from (r, c)."""
+    def _dfs(self, r, c, current, visited, found):
+        """
+        Depth-first search from (r, c), building the string `current`.
+        Uses `visited` to prevent reusing tiles and prefixes to prune.
+        """
         visited[r][c] = True
 
         tile = self.grid[r][c]
@@ -93,16 +103,13 @@ class Boggle:
 
         next_word = current + tile.upper()
 
-        # Prefix pruning
         if next_word not in self._prefixes:
             visited[r][c] = False
             return
 
-        # Check valid word
         if len(next_word) >= 3 and next_word in self._dict_words:
-            found_words[next_word] = True
+            found[next_word] = True
 
-        # Explore all 8 directions
         for dr in (-1, 0, 1):
             for dc in (-1, 0, 1):
                 if dr == 0 and dc == 0:
@@ -112,20 +119,31 @@ class Boggle:
                 nc = c + dc
 
                 if self._in_bounds(nr, nc) and not visited[nr][nc]:
-                    self._dfs(nr, nc, next_word, visited, found_words)
+                    self._dfs(nr, nc, next_word, visited, found)
 
         visited[r][c] = False
 
     def _in_bounds(self, r, c):
-        """Check if position is inside grid."""
-        return 0 <= r < self.grid_size and 0 <= c < self.grid_size
+        """Check if (r, c) is inside the grid."""
+        return 0 <= r < self._n and 0 <= c < self._n
 
     def _make_visited_matrix(self, n):
-        """Create visited matrix."""
-        return [[False for _ in range(n)] for _ in range(n)]
+        """Create an NxN False matrix without imports."""
+        visited = []
+        for _ in range(n):
+            row = []
+            for _ in range(n):
+                row.append(False)
+            visited.append(row)
+        return visited
 
     def _is_valid_grid(self, grid):
-        """Validate grid."""
+        """
+        Grid rules:
+          - Must be a non-empty 2D list
+          - Must be square NxN
+          - Every cell must be a non-empty string
+        """
         if not isinstance(grid, list) or len(grid) == 0:
             return False
 
@@ -136,12 +154,14 @@ class Boggle:
             for cell in row:
                 if not isinstance(cell, str) or len(cell.strip()) == 0:
                     return False
-
         return True
 
     def _is_valid_dictionary(self, dictionary):
-        """Validate dictionary."""
-        return isinstance(dictionary, list)
+        """Dictionary must be a list.
+        Items may be ignored if not strings."""
+        if not isinstance(dictionary, list):
+            return False
+        return True
 
 
 def main():
@@ -158,8 +178,8 @@ def main():
         "wet", "arty", "rhr", "not", "quar",
     ]
 
-    game = Boggle(grid, dictionary)
-    print(game.getSolution())
+    mygame = Boggle(grid, dictionary)
+    print(mygame.getSolution())
 
 
 if __name__ == "__main__":
